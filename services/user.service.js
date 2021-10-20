@@ -31,6 +31,13 @@ class UserService {
 		return user;
 	}
 
+	async findByEmail(email) {
+		const rta = await models.User.findOne({
+			where: { email },
+		});
+		return rta;
+	}
+
 	async update(id, changes) {
 		const user = await this.findOne(id);
 		const rta = await user.update(changes);
