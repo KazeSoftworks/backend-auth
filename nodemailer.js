@@ -20,7 +20,7 @@ async function sendMail() {
 
 	// send mail with defined transport object
 	let info = await transporter.sendMail({
-		from: `"Node Waluigi 👻"<${config.smtpUser}>`, // sender address
+		from: `"Node Waluigi 👻" <${config.smtpUser}>`, // sender address
 		to: config.smtpReciever, // list of receivers
 		subject: 'Prueba de waluigi', // Subject line
 		text: 'Waluigi time', // plain text body
