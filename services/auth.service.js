@@ -41,8 +41,11 @@ class AuthService {
 			return { message: 'If mail exists, it was sended' };
 		}
 		const payload = { sub: user.id };
-		const token = jwt.sign(payload, config.jwtSecret, { expiresIn: '15min' });
+		const token = jwt.sign(payload, config.jwtSecretRecovery, {
+			expiresIn: '15min',
+		});
 		const link = `http://localhost:3000/recovery?token=${token}`;
+		await service.update(user.id, { recoveryToken: token });
 		const mail = {
 			from: `"Kaze Recuperator 👻" <${config.smtpUser}>`, // sender address
 			to: `${user.email}`, // list of receivers
@@ -67,6 +70,21 @@ class AuthService {
 
 		await transporter.sendMail(infoMail);
 		return { message: 'If mail exists, it was sent' };
+	}
+
+	async changePassword(token, newPassword) {
+		try {
+			const payload = jwt.verify(token, config.jwtSecretRecovery);
+			const user = await service.findOne(payload.sub);
+			if (user.recoveryToken !== token) {
+				throw boom.unauthorized();
+			}
+			const password = await bcrypt.hash(newPassword, 10);
+			await service.update(user.id, { password, recoveryToken: null });
+			return { message: 'Password changed' };
+		} catch (error) {
+			throw boom.unauthorized();
+		}
 	}
 }
 module.exports = AuthService;
