@@ -33,12 +33,28 @@ class AuthService {
 			token,
 		};
 	}
-	async sendMail(email) {
+
+	async sendRecovery(email) {
 		const user = await service.findByEmail(email);
 		if (!user) {
-			console.error('Este correo no existe ', user);
+			console.error('Este correo no existe ', email);
 			return { message: 'If mail exists, it was sended' };
 		}
+		const payload = { sub: user.id };
+		const token = jwt.sign(payload, config.jwtSecret, { expiresIn: '15min' });
+		const link = `http://localhost:3000/recovery?token=${token}`;
+		const mail = {
+			from: `"Kaze Recuperator 👻" <${config.smtpUser}>`, // sender address
+			to: `${user.email}`, // list of receivers
+			subject: 'Recuperacion de contraseña', // Subject line
+			text: 'Waluigi time', // plain text body
+			html: `<b>Ingresa a este link => ${link}</b>`, // html body
+		};
+		const rta = await this.sendMail(mail);
+		return rta;
+	}
+
+	async sendMail(infoMail) {
 		const transporter = nodemailer.createTransport({
 			host: config.smtpHost,
 			secure: true,
@@ -49,13 +65,7 @@ class AuthService {
 			},
 		});
 
-		await transporter.sendMail({
-			from: `"Kaze Recuperator 👻" <${config.smtpUser}>`, // sender address
-			to: `${user.email}`, // list of receivers
-			subject: 'Recuperacion de contraseña', // Subject line
-			text: 'Waluigi time', // plain text body
-			html: '<h1>Waluigi time</h1>', // html body
-		});
+		await transporter.sendMail(infoMail);
 		return { message: 'If mail exists, it was sent' };
 	}
 }
